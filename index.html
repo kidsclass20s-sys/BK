@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Football Scoreboard — Mobile-Friendly Final</title>
+<title>Football Scoreboard — Final (Space-safe)</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700;900&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -50,17 +50,54 @@
     user-select:none; pointer-events:auto;
     transform: scale(0.75);
     transform-origin: top left;
+    white-space:nowrap;
   }
+
+  /* Timer box */
   .time-box{
     background:var(--black); color:var(--white); padding:8px 14px; font-weight:900; font-size:16px; border-radius:4px 0 0 4px;
     display:flex; align-items:center; justify-content:center; min-width:64px; text-align:center;
     box-shadow:0 1px 0 rgba(255,255,255,0.06) inset; cursor:pointer;
+    pointer-events:auto;
   }
-  .team-box{ background:var(--green); color:#000; padding:8px 26px; font-weight:900; font-size:20px; letter-spacing:1px }
-  .score-center{ background:var(--maroon); color:var(--white); padding:8px 22px; font-weight:900; font-size:20px; letter-spacing:6px; border-left:2px solid rgba(255,255,255,0.04); border-right:2px solid rgba(255,255,255,0.04) }
+
+  /* Team boxes */
+  .team-box{ background:var(--green); color:#000; padding:8px 26px; font-weight:900; font-size:20px; letter-spacing:1px; white-space: pre; }
   .team-box.right{ border-radius:0 4px 4px 0 }
 
-  .score-center span, .team-box span { cursor:pointer; display:inline-block; pointer-events:auto; }
+  /* CENTER SCORE: narrow style (half-length feel) */
+  .score-center{
+    background:var(--maroon);
+    color:var(--white);
+    padding:8px 10px;
+    font-weight:900;
+    font-size:20px;
+    letter-spacing:6px;
+    border-left:2px solid rgba(255,255,255,0.04);
+    border-right:2px solid rgba(255,255,255,0.04);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:80px;
+    max-width:120px;
+    text-align:center;
+    pointer-events:auto;
+  }
+
+  /* Ensure team text preserves exact typed spaces */
+  .team-box span { white-space: pre; display:inline-block; }
+
+  @media (max-width:900px){
+    .time-box{ font-size:15px; padding:6px 12px; min-width:56px }
+    .team-box{ font-size:18px; padding:6px 18px }
+    .score-center{ font-size:18px; padding:6px 8px; letter-spacing:4px; min-width:64px; max-width:100px }
+  }
+
+  @media (max-width:420px){
+    .time-box{ font-size:14px; padding:5px 10px; min-width:52px }
+    .team-box{ font-size:16px; padding:5px 12px }
+    .score-center{ font-size:16px; padding:5px 6px; letter-spacing:3px; min-width:56px; max-width:88px }
+  }
 
   /* match simulation bottom-right */
   .match-sim{
@@ -73,16 +110,14 @@
     position:absolute; right:18px; top:12px; z-index:32; background:#fff; border-radius:50%; padding:8px 10px; font-size:18px; cursor:pointer;
     pointer-events:auto; border: none;
   }
-  /* hide gear in mobile landscape */
   @media screen and (orientation: landscape) and (max-width: 900px){
     .settings-btn{ display:none !important; }
   }
-  /* move gear to bottom-right in mobile portrait */
   @media screen and (orientation: portrait) and (max-width: 900px){
     .settings-btn{ top:auto; right:12px; bottom:12px; }
   }
 
-  /* Clean panel (desktop/tablet default) */
+  /* Settings panel base */
   .settings-panel{
     position:absolute; right:18px; top:56px; z-index:33; width:320px; max-width:42%;
     background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.45);
@@ -92,7 +127,6 @@
     max-height: calc(100% - 72px);
   }
 
-  /* Header (drag handle) */
   .panel-header{
     display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--panel-border);
     cursor:grab; user-select:none; background:transparent;
@@ -100,58 +134,38 @@
   .panel-header .title{font-weight:900; font-size:14px; color:#111}
   .panel-header .hint{font-size:12px;color:#666}
 
-  /* Content area scrollable */
-  .panel-content{
-    padding:10px 12px;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-  }
+  .panel-content{ padding:10px 12px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
 
-  /* visible scrollbar */
-  .panel-content{
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar) transparent;
-  }
+  .panel-content{ scrollbar-width: thin; scrollbar-color: var(--scrollbar) transparent; }
   .panel-content::-webkit-scrollbar{ width:10px; }
   .panel-content::-webkit-scrollbar-track{ background: transparent; }
   .panel-content::-webkit-scrollbar-thumb{ background: linear-gradient(180deg, var(--scrollbar), #8f8f8f); border-radius:8px; border:2px solid rgba(255,255,255,0.06); }
 
-  /* form elements */
   .settings-panel label{ display:block; font-size:13px; color:#222; margin-top:10px; margin-bottom:6px; font-weight:700 }
   .settings-panel input[type="text"], .settings-panel input[type="number"], .settings-panel input[type="file"]{
     width:100%; padding:10px; font-size:14px; border-radius:8px; border:1px solid #e6e6e6; background:#fff; color:#111;
   }
-
-  /* sticky footer with buttons */
-  .panel-footer{
-    display:flex; gap:8px; justify-content:flex-end; padding:10px 12px; border-top:1px solid var(--panel-border); background:transparent;
-  }
+  .panel-footer{ display:flex; gap:8px; justify-content:flex-end; padding:10px 12px; border-top:1px solid var(--panel-border); background:transparent; }
   .panel-footer button{ padding:8px 12px; border-radius:6px; border:1px solid #ccc; background:#fff; cursor:pointer; font-weight:700 }
 
-  /* Mobile portrait specific: panel takes vertical size of viewport/frame and becomes scrollable if content exceeds */
+  /* Mobile portrait: panel full-screen outside frame so all options show */
   @media screen and (orientation: portrait) and (max-width:900px){
     .settings-panel{
-      /* We'll override exact height via JS to match video-frame; CSS fallback: almost full viewport */
-      position:fixed; /* fixed to viewport for portrait mobile for easier use */
-      right:12px;
-      bottom:12px;
-      top:12px;
-      width: calc(100vw - 24px);
-      max-width:420px;
+      position:fixed !important;
+      top:8px !important;
+      bottom:8px !important;
+      left:8px !important;
+      right:8px !important;
+      width:auto !important;
+      max-width:none !important;
       border-radius:12px;
       display:none;
-      max-height: calc(100vh - 24px);
+      max-height: calc(100vh - 16px) !important;
     }
     .panel-content{ padding-bottom:16px; }
   }
 
-  /* small screens tweak */
-  @media (max-width:420px){
-    .settings-panel{ width:92vw; right:8px; left:8px;}
-  }
-
   .grip{ width:36px; height:6px; border-radius:3px; background:#ddd; opacity:0.9; margin-left:8px; }
-
   .hidden{ display:none !important }
 </style>
 </head>
@@ -166,11 +180,11 @@
 
         <div class="live-badge" id="liveBadge"><div class="live-dot"></div>LIVE</div>
 
-        <div class="scoreboard" id="scoreboard">
-          <div class="time-box" id="timeBox">00:00</div>
-          <div class="team-box" id="teamA">PAK</div>
+        <div class="scoreboard" id="scoreboard" aria-hidden="false">
+          <div class="time-box" id="timeBox" role="button" aria-label="Timer">00:00</div>
+          <div class="team-box" id="teamA"><span id="teamAText">PAK</span></div>
           <div class="score-center" id="scoreCenter"><span id="scoreA">0</span> &nbsp;-&nbsp; <span id="scoreB">0</span></div>
-          <div class="team-box right" id="teamB">IND</div>
+          <div class="team-box right" id="teamB"><span id="teamBText">IND</span></div>
         </div>
 
         <div class="match-sim" id="matchSim">Match Simulation</div>
@@ -187,12 +201,12 @@
           </div>
 
           <div class="panel-content" id="panelContent">
-            <!-- Minimal essentials -->
-            <label for="inputTeamA">Team A Name</label>
-            <input type="text" id="inputTeamA" placeholder="PAK">
+            <label for="inputTeamA">Team A Name (exact spacing preserved)</label>
+            <!-- use a normal input so keyboard behaves naturally; JS will not trim or collapse spaces -->
+            <input type="text" id="inputTeamA" placeholder="South Africa" autocomplete="off" />
 
-            <label for="inputTeamB">Team B Name</label>
-            <input type="text" id="inputTeamB" placeholder="IND">
+            <label for="inputTeamB">Team B Name (exact spacing preserved)</label>
+            <input type="text" id="inputTeamB" placeholder="England" autocomplete="off" />
 
             <label for="inputVideo">Gameplay Video (loop)</label>
             <input type="file" id="inputVideo" accept="video/*">
@@ -223,11 +237,11 @@
   </div>
 
 <script>
-  /* Basic elements */
+  /* Elements */
   const bgVideo = document.getElementById('bgVideo');
   const timeBox = document.getElementById('timeBox');
-  const teamAEl = document.getElementById('teamA');
-  const teamBEl = document.getElementById('teamB');
+  const teamAText = document.getElementById('teamAText');
+  const teamBText = document.getElementById('teamBText');
   const scoreAEl = document.getElementById('scoreA');
   const scoreBEl = document.getElementById('scoreB');
   const matchSim = document.getElementById('matchSim');
@@ -239,6 +253,8 @@
   const applyBtn = document.getElementById('applyBtn');
   const closeBtn = document.getElementById('closeBtn');
 
+  const inputTeamA = document.getElementById('inputTeamA');
+  const inputTeamB = document.getElementById('inputTeamB');
   const inputVideo = document.getElementById('inputVideo');
   const inputMusic = document.getElementById('inputMusic');
   const inputGoal  = document.getElementById('inputGoal');
@@ -254,6 +270,7 @@
 
   let goalUrl = null, currentGoalAudio = null, goalTimerRef = null;
 
+  /* Helpers */
   function formatTime(s){
     const mm = String(Math.floor(s/60)).padStart(2,'0');
     const ss = String(s%60).padStart(2,'0');
@@ -270,14 +287,22 @@
   }
   function stopTimer(){ if(timerInterval){ clearInterval(timerInterval); timerInterval = null; } }
 
-  /* Timer click logic */
-  timeBox.addEventListener('click', ()=>{
-    if(matchState === 'stopped'){ startTimer(); matchState = 'running'; halfOccurred = false; updateTimeBoxDisplay(); }
-    else if(matchState === 'running'){
+  /* Timer click: isolated handler - only runs when clicked directly */
+  timeBox.addEventListener('click', (e)=>{
+    // if user currently typing inside an input/textarea, do nothing (safety guard)
+    const active = document.activeElement;
+    if(active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+
+    if(matchState === 'stopped'){
+      startTimer(); matchState = 'running'; halfOccurred = false; updateTimeBoxDisplay();
+    } else if(matchState === 'running'){
       if(halfOccurred === true){ stopTimer(); matchState = 'full'; updateTimeBoxDisplay(); }
       else{ stopTimer(); matchState = 'half'; halfOccurred = true; updateTimeBoxDisplay(); }
-    } else if(matchState === 'half'){ matchState = 'running'; startTimer(); updateTimeBoxDisplay(); }
-    else if(matchState === 'full'){ stopTimer(); timerSeconds = 0; matchState = 'stopped'; halfOccurred = false; updateTimeBoxDisplay(); }
+    } else if(matchState === 'half'){
+      matchState = 'running'; startTimer(); updateTimeBoxDisplay();
+    } else if(matchState === 'full'){
+      stopTimer(); timerSeconds = 0; matchState = 'stopped'; halfOccurred = false; updateTimeBoxDisplay();
+    }
   });
 
   /* Score clicks */
@@ -297,103 +322,94 @@
     }catch(e){}
   }
 
-  /* Settings open/close + adaptive sizing for mobile portrait */
+  /* Settings open/close + responsive behavior */
   function openPanel(){
-    // set panel visible
     panel.style.display = 'flex';
-    // if mobile portrait small screens - set panel height to match video-frame available height
     const isPortraitMobile = window.matchMedia('(orientation: portrait) and (max-width: 900px)').matches;
     if(isPortraitMobile){
-      // position the panel fixed near the frame area to feel native
-      // compute video-frame rect to set top/bottom such that panel fits inside viewport
-      const frame = document.getElementById('videoFrame');
-      const fRect = frame.getBoundingClientRect();
-      // If frame height is smaller than viewport, prefer frame height; else use viewport
-      const availableTop = Math.max(8, Math.round(fRect.top + 8)); // small padding
-      const availableBottom = Math.max(8, Math.round(window.innerHeight - fRect.bottom + 8));
-      // set panel to match frame vertical space if possible
-      const topPx = availableTop;
-      const heightPx = Math.max(120, fRect.height - 16); // ensure minimal height
-      // apply
       panel.style.position = 'fixed';
-      panel.style.top = `${topPx}px`;
-      panel.style.bottom = 'auto';
-      panel.style.height = `${heightPx}px`;
-      panel.style.right = `${Math.max(8, window.innerWidth - (fRect.right) + 8)}px`; // keep inside frame
-      panel.style.left = 'auto';
-      panel.style.width = Math.min(420, Math.max(260, Math.round(fRect.width * 0.92))) + 'px';
-      panelContent.scrollTop = 0;
-      // ensure content can scroll
+      panel.style.top = '8px';
+      panel.style.left = '8px';
+      panel.style.right = '8px';
+      panel.style.bottom = '8px';
+      panel.style.width = 'auto';
+      panel.style.maxWidth = 'none';
+      panel.style.height = 'auto';
       panelContent.style.overflowY = 'auto';
     } else {
-      // desktop/tablet: make panel positioned relative inside frame
       panel.style.position = 'absolute';
       panel.style.top = panel.style.top || '56px';
-      panel.style.right = '18px';
-      panel.style.left = 'auto';
-      panel.style.height = '';
+      panel.style.right = panel.style.right || '18px';
+      panel.style.left = '';
+      panel.style.bottom = '';
       panel.style.width = panel.style.width || '320px';
+      panel.style.maxWidth = '42%';
       panelContent.style.overflowY = 'auto';
     }
+    // show current values in inputs without altering spaces
+    inputTeamA.value = teamAText.textContent;
+    inputTeamB.value = teamBText.textContent;
   }
-
   function closePanel(){
     panel.style.display = 'none';
-    // reset inline sizes when closing (so layout is fresh next open)
-    panel.style.height = '';
+    panel.style.position = '';
     panel.style.top = '';
     panel.style.right = '';
+    panel.style.left = '';
+    panel.style.bottom = '';
     panel.style.width = '';
+    panel.style.maxWidth = '';
+    panel.style.height = '';
   }
 
-  openBtn.addEventListener('click', ()=> {
-    if(panel.style.display === 'flex' || panel.style.display === 'block') closePanel(); else openPanel();
-  });
+  openBtn.addEventListener('click', ()=> { if(panel.style.display==='flex' || panel.style.display==='block') closePanel(); else openPanel(); });
   closeBtn.addEventListener('click', ()=> closePanel());
 
+  /* Apply settings */
   applyBtn.addEventListener('click', ()=>{
-    const tA = document.getElementById('inputTeamA').value.trim();
-    const tB = document.getElementById('inputTeamB').value.trim();
-    if(tA) teamAEl.textContent = tA.toUpperCase();
-    if(tB) teamBEl.textContent = tB.toUpperCase();
+    // Apply team names exactly as typed (preserve all spaces)
+    const rawA = inputTeamA.value !== undefined ? inputTeamA.value : 'PAK';
+    const rawB = inputTeamB.value !== undefined ? inputTeamB.value : 'IND';
+    // Use textContent so spaces are preserved and not interpreted as HTML
+    teamAText.textContent = rawA;
+    teamBText.textContent = rawB;
 
+    // Timer start values
     const mins = parseInt(inputMin.value) || 0;
     const secs = parseInt(inputSec.value) || 0;
     timerSeconds = mins*60 + secs;
     updateTimeBoxDisplay();
 
+    // Background video
     const vfile = inputVideo.files[0];
     if(vfile){ try{ const url = URL.createObjectURL(vfile); bgVideo.src = url; bgVideo.load(); bgVideo.play().catch(()=>{}); }catch(e){} }
 
+    // Background music
     const mfile = inputMusic.files[0];
     if(mfile){ try{ const url = URL.createObjectURL(mfile); document.getElementById('bgMusic').src = url; document.getElementById('bgMusic').muted = false; document.getElementById('bgMusic').play().catch(()=>{}); }catch(e){} }
 
+    // Goal sound
     const gfile = inputGoal.files[0];
     if(gfile){ try{ goalUrl = URL.createObjectURL(gfile); }catch(e){} }
 
     closePanel();
   });
 
-  /* Dragging - allow moving the panel vertically while keeping it inside the video frame bounds */
+  /* Dragging for header (move panel) */
   (function enablePanelDrag(){
     let dragging = false;
     let startY = 0;
     let startTop = 0;
 
     function clampTop(t){
-      const frame = document.getElementById('videoFrame');
-      const frameRect = frame.getBoundingClientRect();
-      const panelRect = panel.getBoundingClientRect();
-      const minTop = frameRect.top + 8;
-      const maxTop = frameRect.bottom - panelRect.height - 8;
+      const minTop = 8;
+      const maxTop = window.innerHeight - (panel.getBoundingClientRect().height + 8);
       return Math.min(Math.max(t, minTop), Math.max(minTop, maxTop));
     }
-
     panelHeader.addEventListener('mousedown', (e)=>{
       dragging = true;
       startY = e.clientY;
-      const panelRect = panel.getBoundingClientRect();
-      startTop = panelRect.top;
+      startTop = panel.getBoundingClientRect().top;
       panelHeader.style.cursor = 'grabbing';
       document.body.style.userSelect = 'none';
     });
@@ -401,66 +417,74 @@
       if(!dragging) return;
       const dy = e.clientY - startY;
       const newTop = clampTop(startTop + dy);
+      panel.style.position = 'fixed';
       panel.style.top = `${newTop}px`;
       panel.style.bottom = 'auto';
-      panel.style.position = 'fixed';
     });
-    window.addEventListener('mouseup', ()=>{
-      if(dragging){ dragging = false; panelHeader.style.cursor = 'grab'; document.body.style.userSelect = ''; }
-    });
+    window.addEventListener('mouseup', ()=>{ if(dragging){ dragging=false; panelHeader.style.cursor='grab'; document.body.style.userSelect=''; } });
 
-    // Touch
+    // touch
     panelHeader.addEventListener('touchstart', (ev)=>{
       const t = ev.touches[0];
       dragging = true;
       startY = t.clientY;
-      const panelRect = panel.getBoundingClientRect();
-      startTop = panelRect.top;
+      startTop = panel.getBoundingClientRect().top;
     }, {passive:true});
     window.addEventListener('touchmove', (ev)=>{
       if(!dragging) return;
       const t = ev.touches[0];
       const dy = t.clientY - startY;
       const newTop = clampTop(startTop + dy);
+      panel.style.position = 'fixed';
       panel.style.top = `${newTop}px`;
       panel.style.bottom = 'auto';
-      panel.style.position = 'fixed';
     }, {passive:true});
-    window.addEventListener('touchend', ()=>{ dragging = false; });
+    window.addEventListener('touchend', ()=>{ dragging=false; });
   })();
 
+  /* Prevent unwanted space -> timer behavior:
+     Only activate keyboard shortcuts when focus is NOT in an input/textarea.
+     This prevents spacebar while typing in inputs from triggering the timer. */
+  document.addEventListener('keydown', (e) => {
+    const active = document.activeElement;
+    const isInputFocused = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+    // Space: toggle timer only when not typing
+    if(e.code === 'Space' || e.key === ' '){
+      if(isInputFocused) return; // do nothing if typing
+      e.preventDefault();
+      // simulate clicking the timer box
+      timeBox.click();
+      return;
+    }
+    // Optional quick score keys only when not typing
+    if(!isInputFocused){
+      if(e.key === 'a' || e.key === 'A'){ scoreAEl.click(); }
+      if(e.key === 'l' || e.key === 'L'){ scoreBEl.click(); }
+    }
+  });
+
   /* Initialize defaults */
-  function updateTimeBoxDisplay(){
-    if(matchState === 'half'){ timeBox.textContent = 'HT'; }
-    else if(matchState === 'full'){ timeBox.textContent = 'FT'; }
-    else { timeBox.textContent = formatTime(timerSeconds); }
-  }
+  teamAText.textContent = 'PAK';
+  teamBText.textContent = 'IND';
   updateTimeBoxDisplay();
-  teamAEl.textContent = 'PAK';
-  teamBEl.textContent = 'IND';
   scoreAEl.textContent = '0';
   scoreBEl.textContent = '0';
   matchSim.textContent = 'Match Simulation';
+  inputMin.value = '0';
+  inputSec.value = '0';
 
-  /* autoplay attempt */
+  /* Autoplay attempt */
   window.addEventListener('load', ()=>{ bgVideo.play().catch(()=>{}); });
 
-  /* resize/orientation handler to recompute panel layout when open */
-  window.addEventListener('resize', ()=>{ if(panel.style.display === 'flex' || panel.style.display === 'block') openPanel(); });
-  window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ if(panel.style.display === 'flex' || panel.style.display === 'block') openPanel(); },250); });
+  /* Recompute panel layout when orientation/resize changes */
+  window.addEventListener('resize', ()=>{ if(panel.style.display==='flex' || panel.style.display==='block') openPanel(); });
+  window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ if(panel.style.display==='flex' || panel.style.display==='block') openPanel(); },250); });
 
-  /* cleanup */
+  /* Cleanup */
   window.addEventListener('beforeunload', ()=>{
     if(timerInterval) clearInterval(timerInterval);
     if(currentGoalAudio){ try{ currentGoalAudio.pause(); currentGoalAudio = null; }catch(e){} }
     if(goalTimerRef) clearTimeout(goalTimerRef);
-  });
-
-  /* keyboard shortcuts */
-  document.addEventListener('keydown', (e)=>{
-    if(e.code === 'Space'){ e.preventDefault(); timeBox.click(); }
-    if(e.key === 'a' || e.key === 'A'){ scoreAEl.click(); }
-    if(e.key === 'l' || e.key === 'L'){ scoreBEl.click(); }
   });
 </script>
 </body>
