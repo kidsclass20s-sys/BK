@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Football Scoreboard — Final</title>
+<title>Football Scoreboard — Final Clean Scrollable Panel</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700;900&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -11,7 +11,11 @@
     --maroon:#6e1f1f;
     --black:#000;
     --white:#fff;
+    --panel-bg:#ffffff;
+    --panel-border:#e6e6e6;
+    --scrollbar:#bfbfbf;
   }
+
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;width:100%;background:#111;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
   .viewport{position:relative;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center}
@@ -25,18 +29,14 @@
     background:#000;
     overflow:hidden;
     z-index:0;
+    border-radius:0;
   }
-  .video-frame video{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-  }
+  .video-frame video{width:100%;height:100%;object-fit:cover;display:block}
 
-  /* overlays are inside the 16:9 frame */
+  /* overlay inside frame */
   .video-overlay { position:absolute; inset:0; pointer-events:none; z-index:30; }
 
-  /* LIVE badge (inside frame top-right) */
+  /* LIVE badge */
   .live-badge{
     position:absolute; top:12px; right:18px; display:flex; align-items:center; gap:8px;
     background:#d92b2b; color:#fff; padding:6px 12px; border-radius:6px; font-size:13px; font-weight:800;
@@ -45,12 +45,12 @@
   .live-dot{width:10px;height:10px;border-radius:50%;background:#fff;animation:pulse 1.2s infinite}
   @keyframes pulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.6}100%{transform:scale(1);opacity:1}}
 
-  /* Scoreboard (top-left inside frame) - scaled 25% down */
+  /* Scoreboard (top-left) - 25% smaller */
   .scoreboard{
     position:absolute; top:18px; left:18px; z-index:31; display:flex; align-items:center; gap:0;
     user-select:none; pointer-events:auto;
-    transform: scale(0.75);           /* 25% smaller */
-    transform-origin: top left;       /* keep top-left anchor so position stays consistent */
+    transform: scale(0.75);
+    transform-origin: top left;
   }
   .time-box{
     background:var(--black); color:var(--white); padding:8px 14px; font-weight:900; font-size:16px; border-radius:4px 0 0 4px;
@@ -61,42 +61,80 @@
   .score-center{ background:var(--maroon); color:var(--white); padding:8px 22px; font-weight:900; font-size:20px; letter-spacing:6px; border-left:2px solid rgba(255,255,255,0.04); border-right:2px solid rgba(255,255,255,0.04) }
   .team-box.right{ border-radius:0 4px 4px 0 }
 
-  @media (max-width:700px){
-    .time-box{ font-size:14px; padding:6px 10px; min-width:54px }
-    .team-box{ font-size:16px; padding:6px 14px }
-    .score-center{ font-size:16px; padding:6px 14px; letter-spacing:4px }
-    .video-frame{ width: min(100vw, calc(100vh * 16 / 9)); height:auto }
-  }
-
   .score-center span, .team-box span { cursor:pointer; display:inline-block; pointer-events:auto; }
 
-  /* Match simulation — bottom-right inside frame (white, transparent) */
+  /* match simulation bottom-right */
   .match-sim{
     position:absolute; right:18px; bottom:14px; z-index:31; color:#fff; font-weight:900; font-size:14px; text-transform:uppercase;
     user-select:none; pointer-events:none;
   }
-  @media (max-width:700px){ .match-sim{ font-size:12px; bottom:10px; right:10px } }
 
-  /* Settings gear inside frame (top-right) */
+  /* Settings gear - top-right normally, bottom-right on mobile portrait */
   .settings-btn{
     position:absolute; right:18px; top:12px; z-index:32; background:#fff; border-radius:50%; padding:8px 10px; font-size:18px; cursor:pointer;
-    pointer-events:auto;
+    pointer-events:auto; border: none;
   }
-
-  /* Hide settings gear on mobile landscape */
   @media screen and (orientation: landscape) and (max-width: 900px){
     .settings-btn{ display:none !important; }
   }
-
-  .settings-panel{
-    position:absolute; right:18px; top:56px; z-index:33; background:#fff; padding:12px; border-radius:8px; min-width:280px; display:none;
-    box-shadow:0 8px 24px rgba(0,0,0,0.5); pointer-events:auto;
+  @media screen and (orientation: portrait) and (max-width: 900px){
+    .settings-btn{ top:auto; right:12px; bottom:12px; }
   }
-  .settings-panel h4{ margin-bottom:8px; font-size:15px }
-  .settings-panel label{ display:block; font-size:13px; margin-top:8px }
-  .settings-panel input[type="text"], .settings-panel input[type="number"], .settings-panel input[type="file"]{ width:100%; padding:6px; margin-top:6px; font-size:13px }
-  .settings-panel .panel-actions{ display:flex; gap:8px; margin-top:10px }
-  .settings-panel button{ padding:8px; border-radius:6px; border:1px solid #ccc; background:#fff; cursor:pointer; font-weight:700 }
+
+  /* Clean scrollable panel with visible scrollbar and draggable header */
+  .settings-panel{
+    position:absolute; right:18px; top:56px; z-index:33; width:300px; max-width:42%;
+    background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.45);
+    pointer-events:auto; display:none;
+    overflow:visible;
+    display:flex; flex-direction:column;
+    max-height: calc(100% - 72px);
+  }
+
+  /* header: drag handle */
+  .panel-header{
+    display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--panel-border);
+    cursor:grab; user-select:none; background:transparent;
+  }
+  .panel-header .title{font-weight:900; font-size:14px; color:#111}
+  .panel-header .hint{font-size:12px;color:#666}
+
+  /* content scroll area */
+  .panel-content{
+    padding:10px 12px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* visible scrollbar styling */
+  .panel-content{
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar) transparent;
+  }
+  /* webkit */
+  .panel-content::-webkit-scrollbar{ width:10px; }
+  .panel-content::-webkit-scrollbar-track{ background: transparent; }
+  .panel-content::-webkit-scrollbar-thumb{ background: linear-gradient(180deg, var(--scrollbar), #8f8f8f); border-radius:8px; border:2px solid rgba(255,255,255,0.06); }
+
+  /* form elements (minimal & clean) */
+  .settings-panel label{ display:block; font-size:13px; color:#222; margin-top:10px; margin-bottom:6px; font-weight:700 }
+  .settings-panel input[type="text"], .settings-panel input[type="number"], .settings-panel input[type="file"]{
+    width:100%; padding:8px 10px; font-size:13px; border-radius:6px; border:1px solid #e6e6e6; background:#fff; color:#111;
+  }
+
+  /* sticky footer with buttons */
+  .panel-footer{
+    display:flex; gap:8px; justify-content:flex-end; padding:10px 12px; border-top:1px solid var(--panel-border); background:transparent;
+  }
+  .panel-footer button{ padding:8px 12px; border-radius:6px; border:1px solid #ccc; background:#fff; cursor:pointer; font-weight:700 }
+
+  /* mobile tweaks */
+  @media (max-width:420px){
+    .settings-panel{ width:250px; right:10px; top:44px; max-height: calc(100% - 60px); }
+  }
+
+  /* make header show a small grip icon to indicate draggability */
+  .grip{ width:36px; height:6px; border-radius:3px; background:#ddd; opacity:0.9; margin-left:8px; }
 
   .hidden{ display:none !important }
 </style>
@@ -108,13 +146,10 @@
         <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
       </video>
 
-      <!-- UI inside the 16:9 frame -->
-      <div class="video-overlay" id="videoOverlay">
+      <div class="video-overlay">
 
-        <!-- Live badge -->
         <div class="live-badge" id="liveBadge"><div class="live-dot"></div>LIVE</div>
 
-        <!-- Scoreboard (top-left, 25% smaller) -->
         <div class="scoreboard" id="scoreboard">
           <div class="time-box" id="timeBox">00:00</div>
           <div class="team-box" id="teamA">PAK</div>
@@ -122,142 +157,116 @@
           <div class="team-box right" id="teamB">IND</div>
         </div>
 
-        <!-- Match simulation bottom-right (white text) -->
         <div class="match-sim" id="matchSim">Match Simulation</div>
 
-        <!-- Settings gear -->
-        <div class="settings-btn" id="openSettings">⚙️</div>
-        <div class="settings-panel" id="settingsPanel">
-          <h4>Settings</h4>
-          <label>Team A Name</label>
-          <input type="text" id="inputTeamA" placeholder="PAK">
-          <label>Team B Name</label>
-          <input type="text" id="inputTeamB" placeholder="IND">
-          <label>Gameplay Video (loop)</label>
-          <input type="file" id="inputVideo" accept="video/*">
-          <label>Background Music (optional)</label>
-          <input type="file" id="inputMusic" accept="audio/*">
-          <label>Goal Celebration Sound (optional)</label>
-          <input type="file" id="inputGoal" accept="audio/*">
-          <label>Timer Start Minutes</label>
-          <input type="number" id="inputMin" value="0" min="0">
-          <label>Timer Start Seconds</label>
-          <input type="number" id="inputSec" value="0" min="0" max="59">
-          <div class="panel-actions">
+        <button class="settings-btn" id="openSettings" aria-label="Open settings">⚙️</button>
+
+        <div class="settings-panel" id="settingsPanel" role="dialog" aria-label="Settings">
+          <div class="panel-header" id="panelHeader">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="grip" aria-hidden="true"></div>
+              <div class="title">Settings</div>
+            </div>
+            <div class="hint">Drag to move</div>
+          </div>
+
+          <div class="panel-content" id="panelContent">
+            <!-- Minimal, essential inputs only (clean) -->
+            <label for="inputTeamA">Team A Name</label>
+            <input type="text" id="inputTeamA" placeholder="PAK">
+
+            <label for="inputTeamB">Team B Name</label>
+            <input type="text" id="inputTeamB" placeholder="IND">
+
+            <label for="inputVideo">Gameplay Video (loop)</label>
+            <input type="file" id="inputVideo" accept="video/*">
+
+            <label for="inputMusic">Background Music (optional)</label>
+            <input type="file" id="inputMusic" accept="audio/*">
+
+            <label for="inputGoal">Goal Celebration Sound (optional)</label>
+            <input type="file" id="inputGoal" accept="audio/*">
+
+            <label for="inputMin">Timer Start Minutes</label>
+            <input type="number" id="inputMin" value="0" min="0">
+
+            <label for="inputSec">Timer Start Seconds</label>
+            <input type="number" id="inputSec" value="0" min="0" max="59">
+          </div>
+
+          <div class="panel-footer">
             <button id="applyBtn">Apply</button>
             <button id="closeBtn">Close</button>
           </div>
         </div>
 
-      </div> <!-- /.video-overlay -->
-    </div> <!-- /.video-frame -->
+      </div>
+    </div>
 
-    <!-- background audio -->
     <audio id="bgMusic" loop></audio>
   </div>
 
 <script>
-  // Elements (inside frame)
+  /* Elements */
+  const bgVideo = document.getElementById('bgVideo');
   const timeBox = document.getElementById('timeBox');
   const teamAEl = document.getElementById('teamA');
   const teamBEl = document.getElementById('teamB');
   const scoreAEl = document.getElementById('scoreA');
   const scoreBEl = document.getElementById('scoreB');
   const matchSim = document.getElementById('matchSim');
-  const bgVideo = document.getElementById('bgVideo');
-  const bgMusic = document.getElementById('bgMusic');
 
-  // Settings
-  const openSettings = document.getElementById('openSettings');
-  const settingsPanel = document.getElementById('settingsPanel');
-  const closeBtn = document.getElementById('closeBtn');
+  const openBtn = document.getElementById('openSettings');
+  const panel = document.getElementById('settingsPanel');
+  const panelHeader = document.getElementById('panelHeader');
+  const panelContent = document.getElementById('panelContent');
   const applyBtn = document.getElementById('applyBtn');
+  const closeBtn = document.getElementById('closeBtn');
+
   const inputVideo = document.getElementById('inputVideo');
   const inputMusic = document.getElementById('inputMusic');
   const inputGoal  = document.getElementById('inputGoal');
+  const inputMin = document.getElementById('inputMin');
+  const inputSec = document.getElementById('inputSec');
 
-  // State
+  /* State */
   let scoreA = 0, scoreB = 0;
   let timerSeconds = 0;
   let timerInterval = null;
   let matchState = 'stopped'; // 'stopped','running','half','full'
   let halfOccurred = false;
 
-  // Goal audio
   let goalUrl = null, currentGoalAudio = null, goalTimerRef = null;
 
-  // Helpers
   function formatTime(s){
     const mm = String(Math.floor(s/60)).padStart(2,'0');
     const ss = String(s%60).padStart(2,'0');
     return `${mm}:${ss}`;
   }
   function updateTimeBoxDisplay(){
-    if(matchState === 'half'){
-      timeBox.textContent = 'HT';
-    } else if(matchState === 'full'){
-      timeBox.textContent = 'FT';
-    } else {
-      timeBox.textContent = formatTime(timerSeconds);
-    }
+    if(matchState === 'half'){ timeBox.textContent = 'HT'; }
+    else if(matchState === 'full'){ timeBox.textContent = 'FT'; }
+    else { timeBox.textContent = formatTime(timerSeconds); }
   }
   function startTimer(){
     if(timerInterval) return;
-    timerInterval = setInterval(()=>{
-      timerSeconds++;
-      updateTimeBoxDisplay();
-    },1000);
+    timerInterval = setInterval(()=>{ timerSeconds++; updateTimeBoxDisplay(); },1000);
   }
-  function stopTimer(){
-    if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
-  }
+  function stopTimer(){ if(timerInterval){ clearInterval(timerInterval); timerInterval = null; } }
 
-  // Timer click logic
+  /* Timer click logic */
   timeBox.addEventListener('click', ()=>{
-    if(matchState === 'stopped'){
-      startTimer();
-      matchState = 'running';
-      halfOccurred = false;
-      updateTimeBoxDisplay();
-    } else if(matchState === 'running'){
-      if(halfOccurred === true){
-        // go to FULL TIME
-        stopTimer();
-        matchState = 'full';
-        updateTimeBoxDisplay();
-      } else {
-        // go to HALF TIME
-        stopTimer();
-        matchState = 'half';
-        halfOccurred = true;
-        updateTimeBoxDisplay();
-      }
-    } else if(matchState === 'half'){
-      // resume from half
-      matchState = 'running';
-      startTimer();
-      updateTimeBoxDisplay();
-    } else if(matchState === 'full'){
-      // reset after full
-      stopTimer();
-      timerSeconds = 0;
-      matchState = 'stopped';
-      halfOccurred = false;
-      updateTimeBoxDisplay();
-    }
+    if(matchState === 'stopped'){ startTimer(); matchState = 'running'; halfOccurred = false; updateTimeBoxDisplay(); }
+    else if(matchState === 'running'){
+      if(halfOccurred === true){ stopTimer(); matchState = 'full'; updateTimeBoxDisplay(); }
+      else{ stopTimer(); matchState = 'half'; halfOccurred = true; updateTimeBoxDisplay(); }
+    } else if(matchState === 'half'){ matchState = 'running'; startTimer(); updateTimeBoxDisplay(); }
+    else if(matchState === 'full'){ stopTimer(); timerSeconds = 0; matchState = 'stopped'; halfOccurred = false; updateTimeBoxDisplay(); }
   });
 
-  // Score clicks (update numbers & optional short goal sound; no center popups)
-  scoreAEl.addEventListener('click', ()=>{
-    scoreA++;
-    scoreAEl.textContent = scoreA;
-    playGoalSoundIfAny();
-  });
-  scoreBEl.addEventListener('click', ()=>{
-    scoreB++;
-    scoreBEl.textContent = scoreB;
-    playGoalSoundIfAny();
-  });
+  /* Score clicks (simple increment + optional sound) */
+  scoreAEl.addEventListener('click', ()=>{ scoreA++; scoreAEl.textContent = scoreA; playGoalSoundIfAny(); });
+  scoreBEl.addEventListener('click', ()=>{ scoreB++; scoreBEl.textContent = scoreB; playGoalSoundIfAny(); });
 
   function playGoalSoundIfAny(){
     if(!goalUrl) return;
@@ -268,62 +277,100 @@
       a.currentTime = 0;
       a.play().catch(()=>{});
       currentGoalAudio = a;
-      goalTimerRef = setTimeout(()=>{
-        if(currentGoalAudio){ try{ currentGoalAudio.pause(); currentGoalAudio = null; }catch(e){} }
-        goalTimerRef = null;
-      },3000);
+      goalTimerRef = setTimeout(()=>{ if(currentGoalAudio){ try{ currentGoalAudio.pause(); currentGoalAudio = null; }catch(e){} } goalTimerRef = null; },3000);
     }catch(e){}
   }
 
-  // Settings panel
-  openSettings.addEventListener('click', ()=> settingsPanel.style.display = 'block');
-  closeBtn.addEventListener('click', ()=> settingsPanel.style.display = 'none');
+  /* Settings panel open/close */
+  openBtn.addEventListener('click', ()=>{
+    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    if(panel.style.display === 'block'){ panelContent.scrollTop = 0; }
+  });
+  closeBtn.addEventListener('click', ()=> panel.style.display = 'none');
 
+  /* Apply settings */
   applyBtn.addEventListener('click', ()=>{
-    // Team names
     const tA = document.getElementById('inputTeamA').value.trim();
     const tB = document.getElementById('inputTeamB').value.trim();
     if(tA) teamAEl.textContent = tA.toUpperCase();
     if(tB) teamBEl.textContent = tB.toUpperCase();
 
-    // Timer start
-    const mins = parseInt(document.getElementById('inputMin').value) || 0;
-    const secs = parseInt(document.getElementById('inputSec').value) || 0;
+    const mins = parseInt(inputMin.value) || 0;
+    const secs = parseInt(inputSec.value) || 0;
     timerSeconds = mins*60 + secs;
     updateTimeBoxDisplay();
 
-    // Background video
     const vfile = inputVideo.files[0];
-    if(vfile){
-      try{
-        const url = URL.createObjectURL(vfile);
-        bgVideo.src = url;
-        bgVideo.load();
-        bgVideo.play().catch(()=>{});
-      }catch(e){}
-    }
+    if(vfile){ try{ const url = URL.createObjectURL(vfile); bgVideo.src = url; bgVideo.load(); bgVideo.play().catch(()=>{}); }catch(e){} }
 
-    // Background music
     const mfile = inputMusic.files[0];
-    if(mfile){
-      try{
-        const url = URL.createObjectURL(mfile);
-        bgMusic.src = url;
-        bgMusic.muted = false;
-        bgMusic.play().catch(()=>{});
-      }catch(e){}
-    }
+    if(mfile){ try{ const url = URL.createObjectURL(mfile); document.getElementById('bgMusic').src = url; document.getElementById('bgMusic').muted = false; document.getElementById('bgMusic').play().catch(()=>{}); }catch(e){} }
 
-    // Goal sound
     const gfile = inputGoal.files[0];
-    if(gfile){
-      try{ goalUrl = URL.createObjectURL(gfile); }catch(e){}
-    }
+    if(gfile){ try{ goalUrl = URL.createObjectURL(gfile); }catch(e){} }
 
-    settingsPanel.style.display = 'none';
+    panel.style.display = 'none';
   });
 
-  // Initialize defaults
+  /* Dragging the panel vertically: click/touch header to drag within video-frame bounds */
+  (function enablePanelDrag(){
+    let dragging = false;
+    let startY = 0;
+    let startTop = 0;
+
+    function clampTop(t){
+      const frame = document.getElementById('videoFrame');
+      const frameRect = frame.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      const minTop = 8; // small padding
+      const maxTop = frameRect.height - panelRect.height - 8;
+      return Math.min(Math.max(t, minTop), Math.max(minTop, maxTop));
+    }
+
+    panelHeader.addEventListener('mousedown', (e)=>{
+      dragging = true;
+      startY = e.clientY;
+      // compute current top relative to frame
+      const frameRect = document.getElementById('videoFrame').getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      startTop = panelRect.top - frameRect.top;
+      panelHeader.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+    });
+    window.addEventListener('mousemove', (e)=>{
+      if(!dragging) return;
+      const frameRect = document.getElementById('videoFrame').getBoundingClientRect();
+      const dy = e.clientY - startY;
+      let newTop = startTop + dy;
+      newTop = clampTop(newTop);
+      panel.style.top = `${newTop}px`;
+    });
+    window.addEventListener('mouseup', ()=>{
+      if(dragging){ dragging = false; panelHeader.style.cursor = 'grab'; document.body.style.userSelect = ''; }
+    });
+
+    // touch events
+    panelHeader.addEventListener('touchstart', (e)=>{
+      const t = e.touches[0];
+      dragging = true;
+      startY = t.clientY;
+      const frameRect = document.getElementById('videoFrame').getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      startTop = panelRect.top - frameRect.top;
+    }, {passive:true});
+    window.addEventListener('touchmove', (e)=>{
+      if(!dragging) return;
+      const t = e.touches[0];
+      const frameRect = document.getElementById('videoFrame').getBoundingClientRect();
+      const dy = t.clientY - startY;
+      let newTop = startTop + dy;
+      newTop = clampTop(newTop);
+      panel.style.top = `${newTop}px`;
+    }, {passive:true});
+    window.addEventListener('touchend', ()=>{ dragging = false; });
+  })();
+
+  /* Initialize defaults */
   updateTimeBoxDisplay();
   teamAEl.textContent = 'PAK';
   teamBEl.textContent = 'IND';
@@ -331,17 +378,15 @@
   scoreBEl.textContent = '0';
   matchSim.textContent = 'Match Simulation';
 
-  // Autoplay attempt
   window.addEventListener('load', ()=>{ bgVideo.play().catch(()=>{}); });
 
-  // Cleanup
   window.addEventListener('beforeunload', ()=>{
     stopTimer();
     if(currentGoalAudio){ try{ currentGoalAudio.pause(); currentGoalAudio = null; }catch(e){} }
     if(goalTimerRef) clearTimeout(goalTimerRef);
   });
 
-  // Keyboard shortcuts (space = timer)
+  /* keyboard shortcuts */
   document.addEventListener('keydown', (e)=>{
     if(e.code === 'Space'){ e.preventDefault(); timeBox.click(); }
     if(e.key === 'a' || e.key === 'A'){ scoreAEl.click(); }
