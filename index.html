@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Football Scoreboard — Final Clean Scrollable Panel</title>
+<title>Football Scoreboard — Mobile-Friendly Final</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700;900&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -29,7 +29,6 @@
     background:#000;
     overflow:hidden;
     z-index:0;
-    border-radius:0;
   }
   .video-frame video{width:100%;height:100%;object-fit:cover;display:block}
 
@@ -74,16 +73,18 @@
     position:absolute; right:18px; top:12px; z-index:32; background:#fff; border-radius:50%; padding:8px 10px; font-size:18px; cursor:pointer;
     pointer-events:auto; border: none;
   }
+  /* hide gear in mobile landscape */
   @media screen and (orientation: landscape) and (max-width: 900px){
     .settings-btn{ display:none !important; }
   }
+  /* move gear to bottom-right in mobile portrait */
   @media screen and (orientation: portrait) and (max-width: 900px){
     .settings-btn{ top:auto; right:12px; bottom:12px; }
   }
 
-  /* Clean scrollable panel with visible scrollbar and draggable header */
+  /* Clean panel (desktop/tablet default) */
   .settings-panel{
-    position:absolute; right:18px; top:56px; z-index:33; width:300px; max-width:42%;
+    position:absolute; right:18px; top:56px; z-index:33; width:320px; max-width:42%;
     background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.45);
     pointer-events:auto; display:none;
     overflow:visible;
@@ -91,7 +92,7 @@
     max-height: calc(100% - 72px);
   }
 
-  /* header: drag handle */
+  /* Header (drag handle) */
   .panel-header{
     display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--panel-border);
     cursor:grab; user-select:none; background:transparent;
@@ -99,27 +100,26 @@
   .panel-header .title{font-weight:900; font-size:14px; color:#111}
   .panel-header .hint{font-size:12px;color:#666}
 
-  /* content scroll area */
+  /* Content area scrollable */
   .panel-content{
     padding:10px 12px;
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
   }
 
-  /* visible scrollbar styling */
+  /* visible scrollbar */
   .panel-content{
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar) transparent;
   }
-  /* webkit */
   .panel-content::-webkit-scrollbar{ width:10px; }
   .panel-content::-webkit-scrollbar-track{ background: transparent; }
   .panel-content::-webkit-scrollbar-thumb{ background: linear-gradient(180deg, var(--scrollbar), #8f8f8f); border-radius:8px; border:2px solid rgba(255,255,255,0.06); }
 
-  /* form elements (minimal & clean) */
+  /* form elements */
   .settings-panel label{ display:block; font-size:13px; color:#222; margin-top:10px; margin-bottom:6px; font-weight:700 }
   .settings-panel input[type="text"], .settings-panel input[type="number"], .settings-panel input[type="file"]{
-    width:100%; padding:8px 10px; font-size:13px; border-radius:6px; border:1px solid #e6e6e6; background:#fff; color:#111;
+    width:100%; padding:10px; font-size:14px; border-radius:8px; border:1px solid #e6e6e6; background:#fff; color:#111;
   }
 
   /* sticky footer with buttons */
@@ -128,12 +128,28 @@
   }
   .panel-footer button{ padding:8px 12px; border-radius:6px; border:1px solid #ccc; background:#fff; cursor:pointer; font-weight:700 }
 
-  /* mobile tweaks */
-  @media (max-width:420px){
-    .settings-panel{ width:250px; right:10px; top:44px; max-height: calc(100% - 60px); }
+  /* Mobile portrait specific: panel takes vertical size of viewport/frame and becomes scrollable if content exceeds */
+  @media screen and (orientation: portrait) and (max-width:900px){
+    .settings-panel{
+      /* We'll override exact height via JS to match video-frame; CSS fallback: almost full viewport */
+      position:fixed; /* fixed to viewport for portrait mobile for easier use */
+      right:12px;
+      bottom:12px;
+      top:12px;
+      width: calc(100vw - 24px);
+      max-width:420px;
+      border-radius:12px;
+      display:none;
+      max-height: calc(100vh - 24px);
+    }
+    .panel-content{ padding-bottom:16px; }
   }
 
-  /* make header show a small grip icon to indicate draggability */
+  /* small screens tweak */
+  @media (max-width:420px){
+    .settings-panel{ width:92vw; right:8px; left:8px;}
+  }
+
   .grip{ width:36px; height:6px; border-radius:3px; background:#ddd; opacity:0.9; margin-left:8px; }
 
   .hidden{ display:none !important }
@@ -167,11 +183,11 @@
               <div class="grip" aria-hidden="true"></div>
               <div class="title">Settings</div>
             </div>
-            <div class="hint">Drag to move</div>
+            <div class="hint">Drag</div>
           </div>
 
           <div class="panel-content" id="panelContent">
-            <!-- Minimal, essential inputs only (clean) -->
+            <!-- Minimal essentials -->
             <label for="inputTeamA">Team A Name</label>
             <input type="text" id="inputTeamA" placeholder="PAK">
 
@@ -207,7 +223,7 @@
   </div>
 
 <script>
-  /* Elements */
+  /* Basic elements */
   const bgVideo = document.getElementById('bgVideo');
   const timeBox = document.getElementById('timeBox');
   const teamAEl = document.getElementById('teamA');
@@ -264,7 +280,7 @@
     else if(matchState === 'full'){ stopTimer(); timerSeconds = 0; matchState = 'stopped'; halfOccurred = false; updateTimeBoxDisplay(); }
   });
 
-  /* Score clicks (simple increment + optional sound) */
+  /* Score clicks */
   scoreAEl.addEventListener('click', ()=>{ scoreA++; scoreAEl.textContent = scoreA; playGoalSoundIfAny(); });
   scoreBEl.addEventListener('click', ()=>{ scoreB++; scoreBEl.textContent = scoreB; playGoalSoundIfAny(); });
 
@@ -281,14 +297,60 @@
     }catch(e){}
   }
 
-  /* Settings panel open/close */
-  openBtn.addEventListener('click', ()=>{
-    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-    if(panel.style.display === 'block'){ panelContent.scrollTop = 0; }
-  });
-  closeBtn.addEventListener('click', ()=> panel.style.display = 'none');
+  /* Settings open/close + adaptive sizing for mobile portrait */
+  function openPanel(){
+    // set panel visible
+    panel.style.display = 'flex';
+    // if mobile portrait small screens - set panel height to match video-frame available height
+    const isPortraitMobile = window.matchMedia('(orientation: portrait) and (max-width: 900px)').matches;
+    if(isPortraitMobile){
+      // position the panel fixed near the frame area to feel native
+      // compute video-frame rect to set top/bottom such that panel fits inside viewport
+      const frame = document.getElementById('videoFrame');
+      const fRect = frame.getBoundingClientRect();
+      // If frame height is smaller than viewport, prefer frame height; else use viewport
+      const availableTop = Math.max(8, Math.round(fRect.top + 8)); // small padding
+      const availableBottom = Math.max(8, Math.round(window.innerHeight - fRect.bottom + 8));
+      // set panel to match frame vertical space if possible
+      const topPx = availableTop;
+      const heightPx = Math.max(120, fRect.height - 16); // ensure minimal height
+      // apply
+      panel.style.position = 'fixed';
+      panel.style.top = `${topPx}px`;
+      panel.style.bottom = 'auto';
+      panel.style.height = `${heightPx}px`;
+      panel.style.right = `${Math.max(8, window.innerWidth - (fRect.right) + 8)}px`; // keep inside frame
+      panel.style.left = 'auto';
+      panel.style.width = Math.min(420, Math.max(260, Math.round(fRect.width * 0.92))) + 'px';
+      panelContent.scrollTop = 0;
+      // ensure content can scroll
+      panelContent.style.overflowY = 'auto';
+    } else {
+      // desktop/tablet: make panel positioned relative inside frame
+      panel.style.position = 'absolute';
+      panel.style.top = panel.style.top || '56px';
+      panel.style.right = '18px';
+      panel.style.left = 'auto';
+      panel.style.height = '';
+      panel.style.width = panel.style.width || '320px';
+      panelContent.style.overflowY = 'auto';
+    }
+  }
 
-  /* Apply settings */
+  function closePanel(){
+    panel.style.display = 'none';
+    // reset inline sizes when closing (so layout is fresh next open)
+    panel.style.height = '';
+    panel.style.top = '';
+    panel.style.right = '';
+    panel.style.width = '';
+  }
+
+  openBtn.addEventListener('click', ()=> {
+    if(panel.style.display === 'flex' || panel.style.display === 'block') closePanel(); else openPanel();
+  });
+  closeBtn.addEventListener('click', ()=> closePanel());
+
   applyBtn.addEventListener('click', ()=>{
     const tA = document.getElementById('inputTeamA').value.trim();
     const tB = document.getElementById('inputTeamB').value.trim();
@@ -309,10 +371,10 @@
     const gfile = inputGoal.files[0];
     if(gfile){ try{ goalUrl = URL.createObjectURL(gfile); }catch(e){} }
 
-    panel.style.display = 'none';
+    closePanel();
   });
 
-  /* Dragging the panel vertically: click/touch header to drag within video-frame bounds */
+  /* Dragging - allow moving the panel vertically while keeping it inside the video frame bounds */
   (function enablePanelDrag(){
     let dragging = false;
     let startY = 0;
@@ -322,55 +384,57 @@
       const frame = document.getElementById('videoFrame');
       const frameRect = frame.getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
-      const minTop = 8; // small padding
-      const maxTop = frameRect.height - panelRect.height - 8;
+      const minTop = frameRect.top + 8;
+      const maxTop = frameRect.bottom - panelRect.height - 8;
       return Math.min(Math.max(t, minTop), Math.max(minTop, maxTop));
     }
 
     panelHeader.addEventListener('mousedown', (e)=>{
       dragging = true;
       startY = e.clientY;
-      // compute current top relative to frame
-      const frameRect = document.getElementById('videoFrame').getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
-      startTop = panelRect.top - frameRect.top;
+      startTop = panelRect.top;
       panelHeader.style.cursor = 'grabbing';
       document.body.style.userSelect = 'none';
     });
     window.addEventListener('mousemove', (e)=>{
       if(!dragging) return;
-      const frameRect = document.getElementById('videoFrame').getBoundingClientRect();
       const dy = e.clientY - startY;
-      let newTop = startTop + dy;
-      newTop = clampTop(newTop);
+      const newTop = clampTop(startTop + dy);
       panel.style.top = `${newTop}px`;
+      panel.style.bottom = 'auto';
+      panel.style.position = 'fixed';
     });
     window.addEventListener('mouseup', ()=>{
       if(dragging){ dragging = false; panelHeader.style.cursor = 'grab'; document.body.style.userSelect = ''; }
     });
 
-    // touch events
-    panelHeader.addEventListener('touchstart', (e)=>{
-      const t = e.touches[0];
+    // Touch
+    panelHeader.addEventListener('touchstart', (ev)=>{
+      const t = ev.touches[0];
       dragging = true;
       startY = t.clientY;
-      const frameRect = document.getElementById('videoFrame').getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
-      startTop = panelRect.top - frameRect.top;
+      startTop = panelRect.top;
     }, {passive:true});
-    window.addEventListener('touchmove', (e)=>{
+    window.addEventListener('touchmove', (ev)=>{
       if(!dragging) return;
-      const t = e.touches[0];
-      const frameRect = document.getElementById('videoFrame').getBoundingClientRect();
+      const t = ev.touches[0];
       const dy = t.clientY - startY;
-      let newTop = startTop + dy;
-      newTop = clampTop(newTop);
+      const newTop = clampTop(startTop + dy);
       panel.style.top = `${newTop}px`;
+      panel.style.bottom = 'auto';
+      panel.style.position = 'fixed';
     }, {passive:true});
     window.addEventListener('touchend', ()=>{ dragging = false; });
   })();
 
   /* Initialize defaults */
+  function updateTimeBoxDisplay(){
+    if(matchState === 'half'){ timeBox.textContent = 'HT'; }
+    else if(matchState === 'full'){ timeBox.textContent = 'FT'; }
+    else { timeBox.textContent = formatTime(timerSeconds); }
+  }
   updateTimeBoxDisplay();
   teamAEl.textContent = 'PAK';
   teamBEl.textContent = 'IND';
@@ -378,10 +442,16 @@
   scoreBEl.textContent = '0';
   matchSim.textContent = 'Match Simulation';
 
+  /* autoplay attempt */
   window.addEventListener('load', ()=>{ bgVideo.play().catch(()=>{}); });
 
+  /* resize/orientation handler to recompute panel layout when open */
+  window.addEventListener('resize', ()=>{ if(panel.style.display === 'flex' || panel.style.display === 'block') openPanel(); });
+  window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ if(panel.style.display === 'flex' || panel.style.display === 'block') openPanel(); },250); });
+
+  /* cleanup */
   window.addEventListener('beforeunload', ()=>{
-    stopTimer();
+    if(timerInterval) clearInterval(timerInterval);
     if(currentGoalAudio){ try{ currentGoalAudio.pause(); currentGoalAudio = null; }catch(e){} }
     if(goalTimerRef) clearTimeout(goalTimerRef);
   });
