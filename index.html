@@ -37,11 +37,30 @@
 
   /* LIVE badge (same) */
   .live-badge{
-    position:absolute; top:12px; right:18px; display:flex; align-items:center; gap:8px;
-    background:#d92b2b; color:#fff; padding:6px 12px; border-radius:6px; font-size:13px; font-weight:800;
-    user-select:none; pointer-events:auto;
+    position:absolute;
+    top:12px;
+    right:18px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#d92b2b;
+    color:#fff;
+    padding:6px 12px;
+    border-radius:6px;
+    font-size:13px;
+    font-weight:800;
+    user-select:none;
+    pointer-events:auto;
+
+    /* --- CHANGES FOR USER REQUEST ---
+       1) Make the entire badge 70% smaller => scale(0.3)
+       2) Keep it static (disable animation on the dot)
+       3) Ensure transform-origin at top right so it stays anchored to the corner
+    */
+    transform: scale(0.3);
+    transform-origin: top right;
   }
-  .live-dot{width:10px;height:10px;border-radius:50%;background:#fff;animation:pulse 1.2s infinite}
+  .live-dot{width:10px;height:10px;border-radius:50%;background:#fff; /* animation disabled */ animation: none; }
   @keyframes pulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.6}100%{transform:scale(1);opacity:1}}
 
   /* -----------------------
@@ -114,6 +133,13 @@
   .match-sim{
     position:absolute; right:18px; bottom:14px; z-index:31; color:#fff; font-weight:900; font-size:14px; text-transform:uppercase;
     user-select:none; pointer-events:none;
+
+    /* --- CHANGES FOR USER REQUEST ---
+       Reduce Match Simulation size by 60% (i.e. keep 40% of original size)
+       Use transform so position remains same and all other behavior unchanged.
+    */
+    transform: scale(0.4);
+    transform-origin: right bottom;
   }
 
   /* Settings gear positioning logic (same) */
