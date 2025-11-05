@@ -66,7 +66,7 @@
   }
 
   /* Team boxes (team name exact spacing preserved) */
-  .team-box{ background:var(--green); color:#000; padding:8px 26px; font-weight:900; font-size:20px; letter-spacing:1px; white-space: pre; }
+  .team-box{ background:var(--green); color:#000; padding:8px 26px; font-weight:900; font-size:20px; letter-spacing:1px; white-space: pre; cursor:pointer; }
   .team-box.right{ border-radius:0 4px 4px 0 }
 
   /* -----------------------
@@ -188,7 +188,10 @@
         <div class="scoreboard" id="scoreboard" aria-hidden="false">
           <div class="time-box" id="timeBox" role="button" aria-label="Timer">00:00</div>
           <div class="team-box" id="teamA"><span id="teamAText">PAK</span></div>
-          <div class="score-center" id="scoreCenter"><span id="scoreA">0</span></div>
+          <div class="score-center" id="scoreCenter" aria-hidden="false">
+            <!-- Combined score: LEFT - RIGHT -->
+            <span id="scoreALeft" style="cursor:pointer;">0</span><span style="display:inline-block; width:8px; text-align:center;"> - </span><span id="scoreBRight" style="cursor:pointer;">0</span>
+          </div>
           <div class="team-box right" id="teamB"><span id="teamBText">IND</span></div>
         </div>
 
@@ -246,7 +249,8 @@
   const timeBox = document.getElementById('timeBox');
   const teamAText = document.getElementById('teamAText');
   const teamBText = document.getElementById('teamBText');
-  const scoreAEl = document.getElementById('scoreA');
+  const scoreALeft = document.getElementById('scoreALeft');
+  const scoreBRight = document.getElementById('scoreBRight');
   const scoreCenter = document.getElementById('scoreCenter');
   const matchSim = document.getElementById('matchSim');
 
@@ -267,6 +271,7 @@
 
   /* State */
   let scoreA = 0;
+  let scoreB = 0;
   let timerSeconds = 0;
   let timerInterval = null;
   let matchState = 'stopped'; // 'stopped','running','half','full'
@@ -284,6 +289,22 @@
     if(matchState === 'half'){ timeBox.textContent = 'HT'; }
     else if(matchState === 'full'){ timeBox.textContent = 'FT'; }
     else { timeBox.textContent = formatTime(timerSeconds); }
+  }
+  function renderScores(){
+    scoreALeft.textContent = String(scoreA);
+    scoreBRight.textContent = String(scoreB);
+  }
+  function playGoalSoundSafely(){
+    if(!goalUrl) return;
+    try{
+      if(currentGoalAudio){ currentGoalAudio.pause(); currentGoalAudio = null; }
+      if(goalTimerRef) clearTimeout(goalTimerRef);
+      const a = new Audio(goalUrl);
+      a.currentTime = 0;
+      a.play().catch(()=>{});
+      currentGoalAudio = a;
+      goalTimerRef = setTimeout(()=>{ if(currentGoalAudio){ try{ currentGoalAudio.pause(); currentGoalAudio = null; }catch(e){} } goalTimerRef = null; },3000);
+    }catch(e){}
   }
   function startTimer(){
     if(timerInterval) return;
@@ -308,22 +329,50 @@
     }
   });
 
-  /* Score click: increment score number inside narrow center */
-  scoreCenter.addEventListener('click', ()=>{
+  /* Center score click: keep original behavior (increments Team A) */
+  scoreCenter.addEventListener('click', (e)=>{
+    // If user clicked specifically on right score span, let its own handler take precedence.
+    // Otherwise increment Team A (preserves old behavior).
+    const target = e.target;
+    if(target === scoreBRight) return; // handled separately
     scoreA++;
-    scoreAEl.textContent = scoreA;
-    // optional goal sound play
-    if(goalUrl){
-      try{
-        if(currentGoalAudio){ currentGoalAudio.pause(); currentGoalAudio = null; }
-        if(goalTimerRef) clearTimeout(goalTimerRef);
-        const a = new Audio(goalUrl);
-        a.currentTime = 0;
-        a.play().catch(()=>{});
-        currentGoalAudio = a;
-        goalTimerRef = setTimeout(()=>{ if(currentGoalAudio){ try{ currentGoalAudio.pause(); currentGoalAudio = null; }catch(e){} } goalTimerRef = null; },3000);
-      }catch(e){}
-    }
+    renderScores();
+    playGoalSoundSafely();
+  });
+
+  /* Click on left score span increments Team A */
+  scoreALeft.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    scoreA++;
+    renderScores();
+    playGoalSoundSafely();
+  });
+
+  /* Click on right score span increments Team B */
+  scoreBRight.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    scoreB++;
+    renderScores();
+    playGoalSoundSafely();
+  });
+
+  /* Click on left team-box increments Team A (keeps UI intuitive) */
+  document.getElementById('teamA').addEventListener('click', (e)=>{
+    // ignore when focused on input fields
+    const active = document.activeElement;
+    if(active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+    scoreA++;
+    renderScores();
+    playGoalSoundSafely();
+  });
+
+  /* Click on right team-box increments Team B */
+  document.getElementById('teamB').addEventListener('click', (e)=>{
+    const active = document.activeElement;
+    if(active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+    scoreB++;
+    renderScores();
+    playGoalSoundSafely();
   });
 
   /* Settings open/close + responsive behavior (mobile panel outside frame) */
@@ -451,8 +500,8 @@
       return;
     }
     if(!isInputFocused){
-      if(e.key === 'a' || e.key === 'A'){ scoreCenter.click(); }
-      if(e.key === 'l' || e.key === 'L'){ scoreCenter.click(); }
+      if(e.key === 'a' || e.key === 'A'){ scoreCenter.click(); } // increments Team A (same)
+      if(e.key === 'l' || e.key === 'L'){ scoreCenter.click(); } // increments Team A (same)
     }
   });
 
@@ -460,7 +509,7 @@
   teamAText.textContent = 'PAK';
   teamBText.textContent = 'IND';
   updateTimeBoxDisplay();
-  scoreAEl.textContent = '0';
+  renderScores();
   matchSim.textContent = 'Match Simulation';
   inputMin.value = '0';
   inputSec.value = '0';
